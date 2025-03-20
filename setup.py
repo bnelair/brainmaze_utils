@@ -52,9 +52,6 @@ setuptools.setup(
         'Programming Language :: Python :: 3.11',
 
         'Operating System :: OS Independent'
-
-        'Intended Audience :: Science/Research',
-
         "License :: OSI Approved :: BSD License",
     ],
     python_requires=REQUIRES_PYTHON,
