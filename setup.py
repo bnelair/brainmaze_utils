@@ -42,7 +42,7 @@ setuptools.setup(
 
     classifiers=[
 
-        'Topic :: Scientific/Engineering :: Medical Science Apps.'
+        'Topic :: Scientific/Engineering :: Medical Science Apps.',
         "Development Status :: 3 - Alpha",
 
         'Programming Language :: Python',
@@ -51,8 +51,11 @@ setuptools.setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
 
-        'Operating System :: OS Independent'
+
+        'Operating System :: OS Independent',
         "License :: OSI Approved :: BSD License",
+        'Intended Audience :: Healthcare Industry',
+        'Intended Audience :: Science/Research',
     ],
     python_requires=REQUIRES_PYTHON,
     install_requires =REQUIRED,
