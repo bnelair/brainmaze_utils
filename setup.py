@@ -38,7 +38,7 @@ setuptools.setup(
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/x-rst',
 
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=["tests*"]),
     include_package_data=True,
 
     classifiers=[
