@@ -1,5 +1,5 @@
 numpy
-setuptools
+setuptools>=61
 setuptools_scm
 scipy
 pandas

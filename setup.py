@@ -28,7 +28,7 @@ if os.path.exists('requirements.txt'):
 setuptools.setup(
     name=NAME,
     use_scm_version=True,
-    setup_requires=['setuptools>=42', 'setuptools_scm'],
+    setup_requires=['setuptools>=61', 'setuptools_scm'],
 
     description=DESCRIPTION,
     author=AUTHOR,
