@@ -42,6 +42,7 @@ setuptools.setup(
     include_package_data=True,
 
     classifiers=[
+
         'Topic :: Scientific/Engineering :: Medical Science Apps.',
         "Development Status :: 3 - Alpha",
         'Programming Language :: Python',
