@@ -4,14 +4,50 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from datetime import datetime, timedelta
-from pandas._libs.tslibs.timestamps import Timestamp
+from datetime import datetime, timedelta, time
+from pandas import Timestamp
 from dateutil import tz
 import pandas as pd
 import numpy as np
-from copy import deepcopy
-from tqdm import tqdm
 
+
+
+from typing import Union
+
+def _validate_numeric_dtype(series, column_name):
+    """
+    Checks if a pandas Series does not contain datetime, time, or timestamp data.
+
+    Args:
+        series (pd.Series): The pandas Series to check.
+        column_name (str): The name of the column being checked (for error messages).
+
+    Raises:
+        TypeError: If the Series contains datetime, time, or timestamp data.
+    """
+    disallowed_dtypes = (datetime, time, Timestamp)
+    if series.dtype.name == 'object':
+        try:
+            pd.to_datetime(series)
+            raise TypeError(f"[INPUT ERROR]: '{column_name}' column cannot be of datetime, time, or timestamp type.")
+        except:
+            pass  # It's not easily convertible to datetime, so we assume it's numeric
+    elif not series.empty and any(isinstance(series.iloc[0], dtype) for dtype in disallowed_dtypes):
+        raise TypeError(f"[INPUT ERROR]: '{column_name}' column cannot be of datetime, time, or timestamp type.")
+
+def _validate_dataframe_annotation_columns(df):
+    """Check for annotation dataframe - start, end must be in timestamp format (float / int)"""
+    if not isinstance(df, pd.DataFrame):
+        raise AssertionError('[INPUT ERROR]: An input variable dfs must be of type pandas.DataFrame.')
+
+    if not 'start' in df.columns or not 'end' in df.columns or not 'annotation' in df.columns:
+        raise ValueError('[INPUT ERROR]: The dataframe must have [start, end, annotation] columns.]')
+
+    for cname in df.columns:
+        if not cname in ['start', 'end', 'annotation', 'duration']:
+            raise Warning(f'[WARNING] tile_annotations - {cname} is not a valid column name. Information '
+                          f'from this column will be lost during annotation tiling'
+                          )
 
 def _convert_to_timestamp(x):
     if isinstance(x, (datetime, Timestamp)):
@@ -19,7 +55,6 @@ def _convert_to_timestamp(x):
         return x.timestamp()
     if isinstance(x, (float, int)): return x
     raise TypeError('[TYPE ERROR]: input variable has to be of a type pandas Timestamp, datetime, float, or int. However ' + type(x) + ' recieved.')
-
 
 def _convert_to_datetime_utc(x):
     if isinstance(x, (datetime, Timestamp)):
@@ -32,7 +67,6 @@ def _convert_to_datetime_utc(x):
         return utc
     raise TypeError('[TYPE ERROR]: input variable has to be of a type pandas Timestamp, datetime, float, or int. However ' + type(x) + ' recieved.')
 
-
 def _convert_to_pandas_timestamp_utc(x):
     if isinstance(x, (datetime, Timestamp)):
         assert x.tzinfo, '[TIMEZONE ERROR] We allow operating with timezone-aware datatypes. This helps preventing inconsistency and errors.'
@@ -44,23 +78,19 @@ def _convert_to_pandas_timestamp_utc(x):
         return utc
     raise TypeError('[TYPE ERROR]: input variable has to be of a type pandas Timestamp, datetime, float, or int. However ' + type(x) + ' recieved.')
 
-
 def _convert_to_utc(x):
     x = _convert_to_datetime_utc(x)
     return x
-
 
 def _convert_to_local(x):
     x = _convert_to_datetime_utc(x)
     x = x.astimezone(tz.tzlocal())
     return x
 
-
 def _convert_to_timezone(x, tzinfo):
     x = _convert_to_datetime_utc(x)
     x = x.astimezone(tzinfo)
     return x
-
 
 def time_to_local(dfHyp):
     """
@@ -87,7 +117,6 @@ def time_to_utc(dfHyp):
     dfHyp['end'] = dfHyp.apply(lambda x: convert(x, 'end'), axis=1)
     return dfHyp
 
-
 def time_to_timezone(dfHyp, tzinfo):
     """
     Converts the annotations into a timezone. The timezone has to be from a python library dateutil
@@ -99,7 +128,6 @@ def time_to_timezone(dfHyp, tzinfo):
     dfHyp['end'] = dfHyp.apply(lambda x: convert(x, 'end'), axis=1)
     return dfHyp
 
-
 def time_to_timestamp(dfHyp):
     """
     Converts the annotations time to timestamp.
@@ -110,7 +138,6 @@ def time_to_timestamp(dfHyp):
     dfHyp['start'] = dfHyp.apply(lambda x: convert(x, 'start'), axis=1)
     dfHyp['end'] = dfHyp.apply(lambda x: convert(x, 'end'), axis=1)
     return dfHyp
-
 
 def create_duration(dfHyp):
     """
@@ -169,90 +196,97 @@ def create_day_indexes(dfHyp, hour=12, tzinfo=tz.tzlocal):
     dfHyp['day'] -= dfHyp['day'].min()
     return dfHyp
 
-
 def merge_annotations(df):
     """
     Merges epochs with the same annotation and end[i-1] == start[i]
+    Updated on 2025-03-27 by F. Mivalt for pandas in Python 3.12
     """
-    new_df = pd.DataFrame()
+
+    _validate_dataframe_annotation_columns(df)
+    _validate_numeric_dtype(df['start'], 'start')
+    _validate_numeric_dtype(df['end'], 'end')
+
+    new_df = []
     for idx, row in enumerate(df.iterrows()):
         appbl = True
         if idx > 0:
-            if new_df.iloc[-1].annotation == row[1].annotation and new_df.iloc[-1].end == row[1].start:
+            if new_df[-1]['annotation'] == row[1].annotation and new_df[-1]['end'] == row[1]['start']:
                 appbl = False
 
         if appbl == True:
-            new_df = new_df.append(row[1], ignore_index=True)
+            new_df += [row[1][['start', 'end', 'annotation']].to_dict()]
         else:
-            new_df.loc[new_df.__len__() - 1, 'end'] = row[1].end
-        if type(new_df.loc[new_df.__len__() - 1, 'end']) in (datetime, Timestamp):
-            new_df.loc[new_df.__len__() - 1, 'duration'] = (new_df.loc[new_df.__len__() - 1, 'end'] - new_df.loc[new_df.__len__() - 1, 'start']).seconds
-        else:
-            new_df.loc[new_df.__len__() - 1, 'duration'] = new_df.loc[new_df.__len__() - 1, 'end'] - new_df.loc[new_df.__len__() - 1, 'start']
+            new_df[-1]['end'] = row[1]['end']
+
+    new_df = pd.DataFrame(new_df)
+    if 'duration' in df.keys():
+        new_df = create_duration(new_df)
+
     return new_df
 
-
-def _tile_row(row, dur_threshold):
-    outp = []
-    start_time = row['start']
-    end_time = row['end']
-    curr_time = row['start']
-
-    if type(row['end']) in (datetime, Timestamp):
-        delta = timedelta(seconds=dur_threshold)
-    else:
-        delta = dur_threshold
-
-    for idx in range(int(np.ceil(row['duration']/dur_threshold))):
-        row_ = row.copy(deep=True)
-        row_['start'] = curr_time
-        curr_time += delta
-        row_['end'] = curr_time
-        if type(row_['end']) in (datetime, Timestamp):
-            row_['duration'] = (row_['end'] - row_['start']).seconds
-        else:
-            row_['duration'] = row_['end'] - row_['start']
-
-        outp += [row_]
-
-    outp[-1]['end'] = end_time
-
-    if type(outp[-1]['end']) in (datetime, Timestamp):
-        outp[-1]['duration'] = (outp[-1]['end'] - outp[-1]['start']).seconds
-    else:
-        outp[-1]['duration'] = outp[-1]['end'] - outp[-1]['start']
-
-    return outp
-
-
-def tile_annotations(df, dur_threshold, verbose=False):
+def tile_annotations(df: pd.DataFrame, dur_threshold:Union[int, float]=30):
     """
+    Optimized tile_annotations using vectorized operations.
     Tiles epochs to the max duration given by dur_threshold in seconds. Reverse to the 'merge annotations'.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'start', 'end', and 'annotation' columns
+                             representing merged annotations.
+        dur_threshold (int): The desired size of each chunk in seconds.
+
+    Returns:
+        pd.DataFrame: DataFrame with tiled annotations.
     """
-    if not isinstance(df, pd.DataFrame):
-        raise AssertionError('[INPUT ERROR]: Variable dfAnnotations must be of type pandas.DataFrame.')
+
+    _validate_dataframe_annotation_columns(df)
+    _validate_numeric_dtype(df['start'], 'start')
+    _validate_numeric_dtype(df['end'], 'end')
 
     if not isinstance(dur_threshold, (int, float)):
         raise AssertionError(
-            '[INPUT ERROR]: dur_threshold must be float or int format giving the maximum duration of a single annotation. All anotations above this duration threshold will be tiled.')
+            '[INPUT ERROR]: dur_threshold must be float or int format giving the maximum duration '
+            'of a single annotation. All anotations above this duration threshold will be tiled.'
+        )
 
     if np.isnan(dur_threshold) or np.isinf(dur_threshold) or dur_threshold <= 0:
         raise AssertionError('[INPUT ERROR]: dur_threshold must be a valid number bigger than 0, not nan and not inf')
 
-    if (df['duration'] > dur_threshold).sum() > 1:
-        outp = []
-        if verbose:
-            it = tqdm(list(df.iterrows()))
-        else:
-            it = list(df.iterrows())
 
-        for row in it:
-            row = row[1]
-            outp += _tile_row(row, dur_threshold)
-        return pd.DataFrame(outp).reset_index(drop=True)
-    else:
-        return df
+    if df.empty:
+        return pd.DataFrame(columns=['start', 'end', 'annotation'])
 
+    starts = df['start'].to_numpy()
+    ends = df['end'].to_numpy()
+    annotations = df['annotation'].to_numpy()
+
+    num_annotations = len(df)
+    all_tiled_starts = []
+    all_tiled_ends = []
+    all_tiled_annotations = []
+
+    for i in range(num_annotations):
+        start = starts[i]
+        end = ends[i]
+        annotation = annotations[i]
+
+        chunk_starts = np.arange(start, end, dur_threshold)
+        chunk_ends = np.minimum(chunk_starts + dur_threshold, end)
+        chunk_annotations = np.full(len(chunk_starts), annotation)
+
+        all_tiled_starts.extend(chunk_starts)
+        all_tiled_ends.extend(chunk_ends)
+        all_tiled_annotations.extend(chunk_annotations)
+
+    new_df = pd.DataFrame({
+        'start': np.array(all_tiled_starts),
+        'end': np.array(all_tiled_ends),
+        'annotation': np.array(all_tiled_annotations)
+    })
+
+    if 'duration' in df.keys():
+        new_df = create_duration(new_df)
+
+    return new_df
 
 def filter_by_duration(dfAnnotations, duration):
     """
@@ -270,7 +304,6 @@ def filter_by_duration(dfAnnotations, duration):
 
     dfAnnotations = dfAnnotations.loc[dfAnnotations['duration'] == duration].reset_index(drop=True)
     return dfAnnotations
-
 
 def filter_by_key(dfAnnotations, key, value):
     """
