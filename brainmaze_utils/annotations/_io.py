@@ -14,9 +14,9 @@ from copy import deepcopy
 # from mef_tools.io import MefReader
 
 
-from .formats.CyberPSG import CyberPSGFile, CyberPSG_XML_Writter
-from .formats.NSRR import NSRRSleepFile
-from .utils import time_to_utc, create_duration, tile_annotations
+from ._formats.CyberPSG import CyberPSGFile, CyberPSG_XML_Writter
+from ._formats.NSRR import NSRRSleepFile
+from ._utils import time_to_utc, create_duration, tile_annotations
 
 
 
