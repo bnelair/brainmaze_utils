@@ -8,7 +8,7 @@ python-dateutil
 pytest
 sphinx
 sphinx_book_theme
-
+tqdm
 
 
 

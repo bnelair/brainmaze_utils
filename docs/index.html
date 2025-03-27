@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=8965de59"></script>
+    <script src="_static/documentation_options.js?v=fc43c42d"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -171,11 +171,7 @@
 <li class="toctree-l1"><a class="reference internal" href="stat.html">Stats</a></li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vector.html">Vector</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="annotations.html">Annotations</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="annotations.io.html">IO</a></li>
-<li class="toctree-l2"><a class="reference internal" href="annotations.utils.html">Utils</a></li>
-</ul>
-</details></li>
+<li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a></li>
 </ul>
 
     </div>
@@ -340,7 +336,12 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze-brain-electrophysiology-behavior-and-dynamics-analysis-toolbox-utils">BrainMaze: Brain Electrophysiology, Behavior and Dynamics Analysis Toolbox - Utils</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-contribute">How to contribute</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#license">License</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#acknowledgment">Acknowledgment</a></li>
 </ul>
@@ -361,11 +362,31 @@ document.write(`
 <p>This toolbox provides a generic tools for the BrainMaze package. This tool was separated from the BrainMaze toolbox to support a convenient and lightweight sharing of these tools across projects.</p>
 <p>This project was originally developed as a part of the <a class="reference external" href="https://github.com/bnelair/best-toolbox">BEhavioral STate Analysis Toolbox (BEST)</a> project. However, the development has transferred to the BrainMaze project.</p>
 </section>
+<section id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h2>
+<p>Documentation is available <a class="reference external" href="https://bnelair.github.io/brainmaze_utils">here</a>.</p>
+</section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>brainmaze-utils
 </pre></div>
 </div>
+</section>
+<section id="how-to-contribute">
+<h2>How to contribute<a class="headerlink" href="#how-to-contribute" title="Link to this heading">#</a></h2>
+<p>The project has 2 main protected branches <em>main</em> that contains official software releases and <em>dev</em> that contains the latest feature implementations shared with developers.
+To implement a new feature a new branch should be created from the <em>dev</em> branch with name pattern of <em>developer_identifier/feature_name</em>.</p>
+<p>After the feature is implemented, a pull request can be created to merge the feature branch into the <em>dev</em> branch with. Pull requests need to be reviewed by the code owners.
+Drafting of new releases will be performed by the code owners in using pull request from <em>dev</em> to <em>main</em> and drafting a new release on GitHub.</p>
+<p>New functions need to be implemented with Sphinx compatible docstrings. The documentation is automatically generated from the docstrings using Sphinx using make_docs.sh either calling its contents.
+Documentation source is in docs_src/ and the generated documentation is in docs/. .doctrees is not shared in the repository.</p>
+<section id="troubleshooting">
+<h3>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h3>
+<p>If updating the docs web generated using sphinx, there might be a lot of changes resulting in a buffer hang up. Using SSH over HTTPS is preferred. If you are using HTTPS, you can increase the buffer size by running the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>config<span class="w"> </span>http.postBuffer<span class="w"> </span><span class="m">524288000</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="license">
 <h2>License<a class="headerlink" href="#license" title="Link to this heading">#</a></h2>
@@ -442,25 +463,19 @@ We appreciate you citing these papers when utilizing this toolbox in further res
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="annotations.io.html">IO</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="annotations.io.html#brainmaze_utils.annotations.io.load_CyberPSG"><code class="docutils literal notranslate"><span class="pre">load_CyberPSG()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.io.html#brainmaze_utils.annotations.io.load_NSRR"><code class="docutils literal notranslate"><span class="pre">load_NSRR()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.io.html#brainmaze_utils.annotations.io.save_CyberPSG"><code class="docutils literal notranslate"><span class="pre">save_CyberPSG()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="annotations.utils.html">Utils</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.create_day_indexes"><code class="docutils literal notranslate"><span class="pre">create_day_indexes()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.create_duration"><code class="docutils literal notranslate"><span class="pre">create_duration()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.filter_by_duration"><code class="docutils literal notranslate"><span class="pre">filter_by_duration()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.filter_by_key"><code class="docutils literal notranslate"><span class="pre">filter_by_key()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.merge_annotations"><code class="docutils literal notranslate"><span class="pre">merge_annotations()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.tile_annotations"><code class="docutils literal notranslate"><span class="pre">tile_annotations()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.time_to_local"><code class="docutils literal notranslate"><span class="pre">time_to_local()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.time_to_timestamp"><code class="docutils literal notranslate"><span class="pre">time_to_timestamp()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.time_to_timezone"><code class="docutils literal notranslate"><span class="pre">time_to_timezone()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="annotations.utils.html#brainmaze_utils.annotations.utils.time_to_utc"><code class="docutils literal notranslate"><span class="pre">time_to_utc()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.create_day_indexes"><code class="docutils literal notranslate"><span class="pre">create_day_indexes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.create_duration"><code class="docutils literal notranslate"><span class="pre">create_duration()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.filter_by_duration"><code class="docutils literal notranslate"><span class="pre">filter_by_duration()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.filter_by_key"><code class="docutils literal notranslate"><span class="pre">filter_by_key()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.load_CyberPSG"><code class="docutils literal notranslate"><span class="pre">load_CyberPSG()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.load_NSRR"><code class="docutils literal notranslate"><span class="pre">load_NSRR()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.merge_annotations"><code class="docutils literal notranslate"><span class="pre">merge_annotations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.save_CyberPSG"><code class="docutils literal notranslate"><span class="pre">save_CyberPSG()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.tile_annotations"><code class="docutils literal notranslate"><span class="pre">tile_annotations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.time_to_local"><code class="docutils literal notranslate"><span class="pre">time_to_local()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.time_to_timestamp"><code class="docutils literal notranslate"><span class="pre">time_to_timestamp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.time_to_timezone"><code class="docutils literal notranslate"><span class="pre">time_to_timezone()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#brainmaze_utils.annotations.time_to_utc"><code class="docutils literal notranslate"><span class="pre">time_to_utc()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -505,7 +520,12 @@ We appreciate you citing these papers when utilizing this toolbox in further res
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brainmaze-brain-electrophysiology-behavior-and-dynamics-analysis-toolbox-utils">BrainMaze: Brain Electrophysiology, Behavior and Dynamics Analysis Toolbox - Utils</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-contribute">How to contribute</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#license">License</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#acknowledgment">Acknowledgment</a></li>
 </ul>
