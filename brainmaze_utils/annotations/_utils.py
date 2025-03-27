@@ -139,6 +139,7 @@ def time_to_timestamp(dfHyp):
     dfHyp['end'] = dfHyp.apply(lambda x: convert(x, 'end'), axis=1)
     return dfHyp
 
+
 def create_duration(dfHyp):
     """
     Creates duration for each epoch within the annotations. (Faster on timestamp)
@@ -151,55 +152,20 @@ def create_duration(dfHyp):
     dfHyp['duration'] = dfHyp.apply(lambda x: duration(x), axis=1)
     return dfHyp
 
-
-def create_day_indexes(dfHyp, hour=12, tzinfo=tz.tzlocal):
-    """
-    Creates a day index for each epoch within the annotations, given the day-time hour supplied as input parameter.
-    The format of start and end has to be an integer or a float in a form representing a timestamp, or a timezone aware datetime  or Timestamp object.
-    If the start and end format do not include timezone, the local timezone will be used.
-    """
-    
-    if not isinstance(dfHyp, pd.DataFrame):
-        raise AssertionError('[INPUT ERROR]: Variable dfHyp must be of a type pandas.DataFrame.')
-
-    if hour < 0 or hour > 23:
-        raise ValueError(
-            '[VALUE ERROR] - An input variable hour_cut indicating at which hour days are separated from each other must be on the range between 0 - 23. Pasted value: ',
-            hour)
-
-    timezone_counter = 0 # timezone_counter == dfHyp.__len__() if timeaware; == 0 if not timeaware; >0 & <dfHyp.__len__() if mismatch
-    datetime_format = False
-    tzinfo = None
-    # check if the data is in
-    for ridx, row in dfHyp.iterrows():
-        if isinstance(row['start'], (Timestamp, datetime)) and isinstance(row['end'], (Timestamp, datetime)):
-            if row['start'].tzinfo and (row['start'].tzinfo == row['start'].tzinfo == row['end'].tzinfo == row['end'].tzinfo):
-                if ridx == 0:
-                    tzinfo = row['start'].tzinfo
-                    timezone_counter += 1
-                elif row['start'].tzinfo == tzinfo:
-                    timezone_counter += 1
-
-    if timezone_counter > 0 and timezone_counter != dfHyp.__len__():
-        raise ValueError('[VALUE ERROR] - Time zones in the start and end fields are inconsistent')
-
-
-    dfHyp = dfHyp.sort_values('start').reset_index(drop=True)
-    dfHyp['day'] = 0
-
-    max_day = int(np.ceil((dfHyp.iloc[-1]['end'] - dfHyp.iloc[0]['start']).total_seconds() / (24*3600)))
-    ref = dfHyp['start'][0].replace(hour=hour, minute=0, second=0, microsecond=0)
-
-    for idx in range(max_day):
-        dfHyp['day'][dfHyp['start'] >= ref] = idx + 1
-        ref += timedelta(days=1)
-    dfHyp['day'] -= dfHyp['day'].min()
-    return dfHyp
-
-def merge_annotations(df):
+def merge_annotations(df: pd.DataFrame):
     """
     Merges epochs with the same annotation and end[i-1] == start[i]
+
     Updated on 2025-03-27 by F. Mivalt for pandas in Python 3.12
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'start', 'end', and 'annotation' columns
+                             representing merged annotations.
+        dur_threshold (int): The desired size of each chunk in seconds.
+
+    Returns:
+        pd.DataFrame: DataFrame with tiled annotations.
+
     """
 
     _validate_dataframe_annotation_columns(df)
@@ -288,7 +254,51 @@ def tile_annotations(df: pd.DataFrame, dur_threshold:Union[int, float]=30):
 
     return new_df
 
-def filter_by_duration(dfAnnotations, duration):
+def create_day_indexes(df: pd.DataFrame, hour: Union[int, float]=12, tzinfo: tz.tz._tzinfo=tz.tzlocal):
+    """
+    Creates a day index for each epoch within the annotations, given the day-time hour supplied as input parameter.
+    The format of start and end has to be an integer or a float in a form representing a timestamp, or a timezone aware datetime  or Timestamp object.
+    If the start and end format do not include timezone, the local timezone will be used.
+    """
+    
+    if not isinstance(df, pd.DataFrame):
+        raise AssertionError('[INPUT ERROR]: Variable dfHyp must be of a type pandas.DataFrame.')
+
+    if hour < 0 or hour > 23:
+        raise ValueError(
+            '[VALUE ERROR] - An input variable hour_cut indicating at which hour days are separated from each other must be on the range between 0 - 23. Pasted value: ',
+            hour)
+
+    timezone_counter = 0 # timezone_counter == dfHyp.__len__() if timeaware; == 0 if not timeaware; >0 & <dfHyp.__len__() if mismatch
+    datetime_format = False
+    tzinfo = None
+    # check if the data is in
+    for ridx, row in df.iterrows():
+        if isinstance(row['start'], (Timestamp, datetime)) and isinstance(row['end'], (Timestamp, datetime)):
+            if row['start'].tzinfo and (row['start'].tzinfo == row['start'].tzinfo == row['end'].tzinfo == row['end'].tzinfo):
+                if ridx == 0:
+                    tzinfo = row['start'].tzinfo
+                    timezone_counter += 1
+                elif row['start'].tzinfo == tzinfo:
+                    timezone_counter += 1
+
+    if timezone_counter > 0 and timezone_counter != df.__len__():
+        raise ValueError('[VALUE ERROR] - Time zones in the start and end fields are inconsistent')
+
+
+    df = df.sort_values('start').reset_index(drop=True)
+    df['day'] = 0
+
+    max_day = int(np.ceil((df.iloc[-1]['end'] - df.iloc[0]['start']).total_seconds() / (24 * 3600)))
+    ref = df['start'][0].replace(hour=hour, minute=0, second=0, microsecond=0)
+
+    for idx in range(max_day):
+        df['day'][df['start'] >= ref] = idx + 1
+        ref += timedelta(days=1)
+    df['day'] -= df['day'].min()
+    return df
+
+def filter_by_duration(dfAnnotations: pd.DataFrame, duration: Union[int, float]):
     """
     Keeps only epochs of the duration given by the input.
     """
@@ -305,7 +315,7 @@ def filter_by_duration(dfAnnotations, duration):
     dfAnnotations = dfAnnotations.loc[dfAnnotations['duration'] == duration].reset_index(drop=True)
     return dfAnnotations
 
-def filter_by_key(dfAnnotations, key, value):
+def filter_by_key(dfAnnotations: pd.DataFrame, key: str, value: Union[int, float]):
     """
     Keeps only annotations given by the key and value within the pandas DataFrame
     """
