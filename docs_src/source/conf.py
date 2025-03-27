@@ -146,12 +146,11 @@ html_theme_options = {
     # 'logo_only': True,
     # Toc options
     'collapse_navigation': False,
-    'navigation_depth': 5,
+    'navigation_depth': 1,
     "repository_url": "https://github.com/bnelair/brainmaze_utils",
     "use_repository_button": True,
-    "home_page_in_toc": True
+    "home_page_in_toc": True,
 }
-
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
