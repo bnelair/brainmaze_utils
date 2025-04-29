@@ -78,9 +78,6 @@ def decimate(x, fs, fs_new, cutoff=None, datarate=False):
     #b = signal.firwin(100, cutoff/(0.5*fs), pass_zero=True)
     #b /= b.sum()
 
-
-
-
     x = signal.filtfilt(b, a, x, axis=1)
 
     n_resampled = int(np.round((fs_new / fs) * x.shape[1]))
@@ -511,7 +508,6 @@ def resample(x, fsamp_orig, fsamp_new):
 
     x = np.interp(xi, xp, x)
     nans = np.interp(xi, xp, nans)
-
 
     x[nans >= 0.5] = np.NaN
     x = (x * var) + mu
