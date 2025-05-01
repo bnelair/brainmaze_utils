@@ -10,7 +10,7 @@ sphinx
 sphinx_book_theme
 tqdm
 
-
+scikit-posthocs
 
 
 
