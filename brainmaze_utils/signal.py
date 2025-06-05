@@ -573,3 +573,170 @@ def find_peaks(y):
     return np.array(position), np.array(value)
 
 
+def downsample_min_max(signal: np.ndarray, original_fs: float, final_fs: float) -> tuple[np.ndarray, float]:
+    """
+    Downsamples an iEEG signal using the min-max method, preserving the temporal
+    order of min and max values within each downsampling window.
+
+    The method processes the input signal in non-overlapping windows. For each
+    window, it finds the minimum and maximum values and their original temporal
+    order. These two values (min and max) are then placed in the output signal
+    in their temporal order of appearance within the window.
+
+    Args:
+        signal (np.ndarray): The input iEEG signal. Can be 1D (samples,)
+                             or 2D (channels, samples).
+        original_fs (float): The original sampling rate of the signal in Hz.
+        final_fs (float): The desired final sampling rate of the *output points* in Hz.
+                          Since each original window produces two points (a min and a max),
+                          the number of original signal windows processed per second is
+                          `final_fs / 2`.
+
+    Returns:
+        tuple[np.ndarray, float]:
+            - np.ndarray: The downsampled iEEG signal. If the input was 1D,
+                          the output is 1D. If 2D, output is 2D.
+            - float: The actual final sampling rate of the output signal in Hz.
+                     This will be close to the requested `final_fs` but may differ
+                     slightly due to integer window sizes.
+
+    Raises:
+        TypeError: If the input signal is not a NumPy array.
+        ValueError: If signal dimensions are incorrect, sampling rates are not positive,
+                    or if `final_fs` implies a `window_size` less than 1.
+
+    Note:
+        The signal is processed in full windows. Any remaining samples at the end
+        of the signal that do not form a complete window are ignored.
+    """
+    if not isinstance(signal, np.ndarray):
+        raise TypeError("Input signal must be a NumPy array.")
+    if signal.ndim not in [1, 2]:
+        raise ValueError("Input signal must be 1D (samples,) or 2D (channels, samples).")
+    if original_fs <= 0:
+        raise ValueError("Original sampling rate must be positive.")
+    if final_fs <= 0:
+        raise ValueError("Final sampling rate must be positive.")
+
+    # Each window in the original signal will produce two points (min and max).
+    # So, the number of original signal segments (windows) processed per second is `final_fs / 2`.
+    effective_segment_fs = final_fs / 2.0
+
+    if effective_segment_fs <= 0:  # Should be caught by final_fs <= 0 already
+        raise ValueError("Calculated effective_segment_fs is not positive. Check final_fs.")
+
+    # window_size is the number of original samples per min-max pair output
+    window_size = int(round(original_fs / effective_segment_fs))
+
+    if window_size < 1:
+        raise ValueError(
+            f"Calculated window_size is {window_size}, which is less than 1. "
+            f"This typically means final_fs ({final_fs} Hz) is too high compared to original_fs ({original_fs} Hz) "
+            "for meaningful min-max downsampling that produces 2 points per window."
+        )
+    if window_size == 1:
+        print(
+            f"Warning: window_size is 1. Each original sample will effectively be duplicated "
+            f"in the output (as min and max of a single point are the point itself). "
+            f"The output sampling rate will be 2 * original_fs. "
+            f"Requested final_fs ({final_fs} Hz) might lead to this behavior."
+        )
+
+    input_signal_is_1d = False
+    if signal.ndim == 1:
+        input_signal_is_1d = True
+        # Convert 1D signal to 2D for consistent processing
+        signal_2d = signal.reshape(1, -1)
+    else:
+        signal_2d = signal
+
+    n_channels, n_samples = signal_2d.shape
+
+    if n_samples == 0:
+        actual_output_fs = 0.0
+        if input_signal_is_1d:
+            return np.array([], dtype=signal.dtype), actual_output_fs
+        else:
+            return np.array([[] for _ in range(n_channels)], dtype=signal.dtype), actual_output_fs
+
+    # Calculate the number of full windows that can be formed
+    num_windows = n_samples // window_size
+
+    if num_windows == 0:
+        # Not enough data for even one full window
+        actual_output_fs = 0.0  # No output points generated from full windows
+        if input_signal_is_1d:
+            return np.array([], dtype=signal.dtype), actual_output_fs
+        else:
+            # Return an empty array with the correct number of channels
+            return np.empty((n_channels, 0), dtype=signal.dtype), actual_output_fs
+
+    # Trim signal to the length that is a multiple of window_size
+    trimmed_length = num_windows * window_size
+    trimmed_signal = signal_2d[:, :trimmed_length]
+
+    # Reshape to (n_channels, num_windows, window_size) to process windows
+    reshaped_signal = trimmed_signal.reshape(n_channels, num_windows, window_size)
+
+    # Find min and max values within each window
+    min_vals_in_windows = np.min(reshaped_signal, axis=2)  # Shape: (n_channels, num_windows)
+    max_vals_in_windows = np.max(reshaped_signal, axis=2)  # Shape: (n_channels, num_windows)
+
+    # Find indices of min and max values within each window (relative to window start)
+    # np.argmin and np.argmax return the index of the *first* occurrence of min/max
+    argmin_in_windows = np.argmin(reshaped_signal, axis=2)  # Shape: (n_channels, num_windows)
+    argmax_in_windows = np.argmax(reshaped_signal, axis=2)  # Shape: (n_channels, num_windows)
+
+    # Initialize the output array: each window produces 2 points
+    downsampled_signal_2d = np.empty((n_channels, num_windows * 2), dtype=signal.dtype)
+
+    # Determine the temporal order of min and max within each window
+    # mask_min_first[ch, win_idx] is True if min occurred before max in that window
+    mask_min_occurred_first = argmin_in_windows < argmax_in_windows
+    # mask_max_occurred_first covers cases where max is strictly first,
+    # or if min_idx == max_idx (then argmin_in_windows < argmax_in_windows is False)
+    mask_max_occurred_first_or_simultaneously = argmin_in_windows >= argmax_in_windows
+
+    # Populate the downsampled signal
+    for ch in range(n_channels):
+        # Slicing for current channel
+        ch_min_vals = min_vals_in_windows[ch, :]
+        ch_max_vals = max_vals_in_windows[ch, :]
+        ch_mask_min_first = mask_min_occurred_first[ch, :]
+        ch_mask_max_first_or_simult = mask_max_occurred_first_or_simultaneously[ch, :]
+
+        # Get indices in the output array for min/max pairs
+        # Example: if num_windows = 3, output length = 6
+        # even_indices = [0, 2, 4], odd_indices = [1, 3, 5]
+        even_output_indices = np.arange(num_windows) * 2
+        odd_output_indices = even_output_indices + 1
+
+        # Case 1: Min value appeared first in the window
+        if np.any(ch_mask_min_first):
+            output_indices_for_min = even_output_indices[ch_mask_min_first]
+            output_indices_for_max = odd_output_indices[ch_mask_min_first]
+            downsampled_signal_2d[ch, output_indices_for_min] = ch_min_vals[ch_mask_min_first]
+            downsampled_signal_2d[ch, output_indices_for_max] = ch_max_vals[ch_mask_min_first]
+
+        # Case 2: Max value appeared first or simultaneously with min in the window
+        if np.any(ch_mask_max_first_or_simult):
+            output_indices_for_max = even_output_indices[ch_mask_max_first_or_simult]
+            output_indices_for_min = odd_output_indices[ch_mask_max_first_or_simult]
+            downsampled_signal_2d[ch, output_indices_for_max] = ch_max_vals[ch_mask_max_first_or_simult]
+            downsampled_signal_2d[ch, output_indices_for_min] = ch_min_vals[ch_mask_max_first_or_simult]
+
+    # Calculate the actual sampling rate of the output signal
+    # Each original window of `window_size` samples produces 2 output samples.
+    # The duration of `window_size` original samples is `window_size / original_fs`.
+    # So, 2 output samples span a time of `window_size / original_fs`.
+    # The time per output sample is `(window_size / original_fs) / 2`.
+    # The actual output sampling rate is `1 / ((window_size / original_fs) / 2) = (2 * original_fs) / window_size`.
+    if window_size == 0:  # Should be caught by num_windows check if n_samples > 0
+        actual_output_fs = 0.0
+    else:
+        actual_output_fs = (2.0 * original_fs) / window_size
+
+    if input_signal_is_1d:
+        return downsampled_signal_2d.ravel(), actual_output_fs
+    else:
+        return downsampled_signal_2d, actual_output_fs
