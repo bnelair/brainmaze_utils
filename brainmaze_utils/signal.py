@@ -731,10 +731,7 @@ def downsample_min_max(signal: np.ndarray, original_fs: float, final_fs: float) 
     # So, 2 output samples span a time of `window_size / original_fs`.
     # The time per output sample is `(window_size / original_fs) / 2`.
     # The actual output sampling rate is `1 / ((window_size / original_fs) / 2) = (2 * original_fs) / window_size`.
-    if window_size == 0:  # Should be caught by num_windows check if n_samples > 0
-        actual_output_fs = 0.0
-    else:
-        actual_output_fs = (2.0 * original_fs) / window_size
+    actual_output_fs = (2.0 * original_fs) / window_size
 
     if input_signal_is_1d:
         return downsampled_signal_2d.ravel(), actual_output_fs
