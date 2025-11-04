@@ -1,6 +1,5 @@
 numpy
 setuptools>=61
-setuptools_scm
 scipy
 pandas
 pytz
@@ -9,11 +8,3 @@ pytest
 sphinx
 sphinx_book_theme
 tqdm
-
-
-
-
-
-
-
-

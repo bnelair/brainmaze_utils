@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "brainmaze-utils"
+dynamic = ["version"]
+description = "BrainMaze: Brain Electrophysiology, Behavior and Dynamics Analysis Toolbox"
+authors = [
+    {name = "Filip Mivalt", email = "mivalt.filip@mayo.edu"},
+]
+readme = "README.rst"
+license = {text = "BSD-3-Clause"}
+requires-python = ">=3.9.0"
+classifiers = [
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: BSD License",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "pytz",
+    "python-dateutil",
+]
+
+[project.urls]
+Homepage = "https://github.com/bnelair/brainmaze_utils"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*", "docs*", "docs_src*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "brainmaze_utils._version.__version__"}
