@@ -34,6 +34,14 @@ dependencies = [
     "python-dateutil",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "sphinx",
+    "sphinx_book_theme",
+    "tqdm",
+]
+
 [project.urls]
 Homepage = "https://github.com/bnelair/brainmaze_utils"
 
