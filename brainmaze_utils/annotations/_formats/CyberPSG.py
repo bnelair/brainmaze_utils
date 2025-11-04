@@ -45,7 +45,7 @@ class CyberPSGFile:
             ET.register_namespace(prefix, uri)
 
     def parse_namespaces(self, path_xml):
-        schema = open(path_xml, 'r').read()
+        schema = open(path_xml, 'r', encoding='utf-8-sig').read()
         namespaces = dict([
             node for _, node in ET.iterparse(StringIO(schema), events=['start-ns'])
         ])
@@ -98,10 +98,16 @@ class CyberPSGFile:
                     for SubElement in AnnotationElement:
                         subtag = SubElement.tag
                         if '}' in subtag: subtag = subtag.split('}')[-1]
-                        if subtag == 'annotationTypeId':  annot['annotationTypeId'] = types[types[SubElement.text]]
+                        if subtag == 'annotationTypeId':
+                            try:
+                                annot['annotation'] = types[SubElement.text]
+                            except KeyError:
+                                annot['annotation'] = 'error_unknown'
                         if subtag == 'startTimeUtc':  annot['startTimeUtc'] = SubElement.text
                         if subtag == 'endTimeUtc':  annot['endTimeUtc'] = SubElement.text
                         if subtag == 'channelName': annot['channel'] = SubElement.text
+                    if annot['annotation'] is None:
+                        annot['annotation'] = 'error_unknown'
                     annotations += [annot]
         return annotations
 
@@ -124,7 +130,11 @@ class CyberPSGFile:
                     for SubElement in AnnotationElement:
                         subtag = SubElement.tag
                         if '}' in subtag: subtag = subtag.split('}')[-1]
-                        if subtag == 'annotationTypeId':  annot['annotation'] = types[SubElement.text]
+                        if subtag == 'annotationTypeId':
+                            try:
+                                annot['annotation'] = types[SubElement.text]
+                            except KeyError:
+                                annot['annotation'] = 'error_unknown'
                         if subtag == 'startTimeUtc':
                             s = SubElement.text
                             if '.' in s:
@@ -144,6 +154,8 @@ class CyberPSGFile:
                             utc = utc.replace(tzinfo=tz.tzutc())
                             annot['end'] = utc
                         if subtag == 'channelName': annot['channel'] = SubElement.text
+                    if annot['annotation'] is None:
+                        annot['annotation'] = 'error_unknown'
                     annotations += [annot]
         return annotations
 
@@ -403,14 +415,3 @@ def parse_CyberPSG_Annotations_xml(path):
     annotations = Annotations.get_annotations()
     dfAnnotations = pd.DataFrame(annotations)
     return dfAnnotations, annotationTypes
-
-
-
-
-
-
-
-
-
-
-
