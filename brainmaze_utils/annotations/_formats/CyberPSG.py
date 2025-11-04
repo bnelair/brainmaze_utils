@@ -45,7 +45,8 @@ class CyberPSGFile:
             ET.register_namespace(prefix, uri)
 
     def parse_namespaces(self, path_xml):
-        schema = open(path_xml, 'r', encoding='utf-8-sig').read()
+        with open(path_xml, 'r', encoding='utf-8-sig') as f:
+            schema = f.read()
         namespaces = dict([
             node for _, node in ET.iterparse(StringIO(schema), events=['start-ns'])
         ])
